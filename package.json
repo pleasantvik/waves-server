@@ -1,0 +1,33 @@
+{
+  "name": "waves",
+  "version": "1.0.0",
+  "description": "An E-commerce site ",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "server": "nodemon server/server.js",
+    "client": "npm start --prefix client",
+    "dev": "concurrently \"npm run server\" \"npm run client\" "
+  },
+  "author": "Adedayo",
+  "license": "ISC",
+  "dependencies": {
+    "accesscontrol": "^2.2.1",
+    "bcrypt": "^5.1.0",
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^1.25.1",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "express-formidable": "^1.2.0",
+    "express-mongo-sanitize": "^2.0.2",
+    "express-validator": "^6.10.0",
+    "http-status": "^1.5.0",
+    "jsonwebtoken": "^8.5.1",
+    "mailgen": "^2.0.14",
+    "mongoose": "^6.7.5",
+    "mongoose-aggregate-paginate-v2": "^1.0.42",
+    "passport": "^0.4.1",
+    "passport-jwt": "^4.0.0",
+    "xss-clean": "^0.1.1"
+  }
+}
