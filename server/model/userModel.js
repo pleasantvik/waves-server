@@ -71,7 +71,7 @@ const userSchema = new mongoose.Schema({
       message: "Password are not the same",
     },
   },
-  //   passwordChangedAt: Date,
+  passwordChangedAt: Date,
   //   passwordResetToken: String,
   //   passwordResetExpires: Date,
   //   active: {
@@ -89,34 +89,37 @@ userSchema.pre("save", async function (next) {
   this.confirmPassword = undefined;
   next();
 });
-// userSchema.methods.correctPassword = async function(
-//   candidatePassword,
-//   userPassword
-// ) {
-//   return await bcrypt.compare(candidatePassword, userPassword);
-// };
 
-// userSchema.pre('save', function(next) {
-//   if (!this.isModified('password') || this.isNew) return next();
+//This method check if the unhashed password(candidate password) matches the hashed password(userPassword) in the DB
+userSchema.methods.matchPassword = async function (
+  candidatePassword,
+  userPassword
+) {
+  return await bcrypt.compare(candidatePassword, userPassword);
+};
 
-//   this.passwordChangedAt = Date.now() - 1000;
+userSchema.pre("save", function (next) {
+  if (!this.isModified("password") || this.isNew) return next();
 
-//   next();
-// });
+  this.passwordChangedAt = Date.now() - 1000;
 
-// userSchema.methods.changedPasswordAfter = function(JWTTimeStamp) {
-//   if (this.passwordChangedAt) {
-//     const passwordChangeTimestamp = parseInt(
-//       this.passwordChangedAt.getTime() / 1000,
-//       10
-//     );
-//     // console.log(passwordChangeTimestamp, JWTTimeStamp);
-//     return JWTTimeStamp < passwordChangeTimestamp; // if this is true, it means user changed password
-//   }
+  next();
+});
 
-//   // If we return false it means the password didnt change
-//   return false;
-// };
+userSchema.methods.changedPasswordAfter = function (JWTTimeStamp) {
+  if (this.passwordChangedAt) {
+    console.log(this.passwordChangedAt, JWTTimeStamp);
+    const passwordChangeTimestamp = parseInt(
+      this.passwordChangedAt.getTime() / 1000,
+      10
+    );
+    console.log(passwordChangeTimestamp, JWTTimeStamp);
+    return JWTTimeStamp < passwordChangeTimestamp; // if this is true, it means user changed password
+  }
+
+  // If we return false it means the password didnt change
+  return false;
+};
 
 // userSchema.methods.createPasswordResetToken = function() {
 //   const resetToken = crypto.randomBytes(32).toString('hex');

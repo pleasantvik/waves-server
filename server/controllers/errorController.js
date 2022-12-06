@@ -6,14 +6,14 @@ const handleCastErrorDB = (err) => {
   const message = `Invalid ${err.path}: ${err.value}`;
   return new AppError(message, httpStatus.BAD_REQUEST);
 };
-// const handleJwtInvalidTokenError = () => {
-//   const message = `Invalid token. Please log in again`;
-//   return new AppError(message, 401);
-// };
-// const handleJwtExpiredTokenError = () => {
-//   const message = `Your token has expired. Please log in again`;
-//   return new AppError(message, 401);
-// };
+const handleJwtInvalidTokenError = () => {
+  const message = `Invalid token. Please log in again`;
+  return new AppError(message, httpStatus.UNAUTHORIZED);
+};
+const handleJwtExpiredTokenError = () => {
+  const message = `Your token has expired. Please log in again`;
+  return new AppError(message, 401);
+};
 
 // //DUPLICATE FIELD
 const handleDuplicateFieldsDB = (err) => {
@@ -152,6 +152,8 @@ module.exports = (err, req, res, next) => {
     if (error.name === "CastError") error = handleCastErrorDB(error);
     if (err.code === 11000) error = handleDuplicateFieldsDB(err);
     if (err.name === "ValidationError") error = handleValidationErrorDB(err);
+    if (err.name === "JsonWebTokenError") error = handleJwtInvalidTokenError();
+    if (err.name === "TokenExpiredError") error = handleJwtExpiredTokenError();
 
     sendErrorProd(error, req, res);
   }

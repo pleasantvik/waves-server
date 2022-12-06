@@ -1,12 +1,161 @@
 // const crypto = require("crypto");
-// const { promisify } = require("util");
+const { promisify } = require("util");
 const jwt = require("jsonwebtoken");
-// // const User = require("../models/userModel");
 const User = require("../model/userModel");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const httpStatus = require("http-status");
 // // const Email = require("../utils/email");
+
+//REUSABLE FUNCTION TO CREATE TOKEN
+const signToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRATION,
+  });
+};
+
+//SIGN USER IN
+exports.signin = catchAsync(async (req, res, next) => {
+  const { email, password } = req.body;
+  //1. check if user email and password exist
+  if (!email || !password) {
+    return next(
+      new AppError("Please provide email and password", httpStatus.UNAUTHORIZED)
+    );
+  }
+
+  //2. Check if user exist and password is correct
+  const user = await User.findOne({ email }).select("+password");
+
+  if (!user || !(await user.matchPassword(password, user.password))) {
+    return next(
+      new AppError("Incorrect email or password", httpStatus.UNAUTHORIZED)
+    );
+  }
+
+  //3. Send token
+
+  const token = signToken(user._id);
+  // res.cookie("jwt", token);
+  res.status(httpStatus.CREATED).json({
+    status: "success",
+    token,
+  });
+});
+
+exports.isauth = catchAsync(async (req, res, next) => {
+  res.status(200).json({
+    status: "success",
+    message: "welcome auth",
+  });
+});
+
+exports.signup = catchAsync(async (req, res, next) => {
+  const { firstname, email, password, lastname, confirmPassword, role } =
+    req.body;
+
+  const newUser = await User.create({
+    firstname,
+    email,
+    password,
+    confirmPassword,
+    lastname,
+    role,
+  });
+
+  //CREATING TOKEN
+  const token = signToken(newUser._id);
+
+  res.status(httpStatus.CREATED).json({
+    status: "success",
+    token,
+    data: {
+      user: newUser,
+    },
+  });
+
+  // next(new AppError("Something went wrong", 500));
+});
+
+//PROTECT ROUTE
+exports.protect = catchAsync(async (req, res, next) => {
+  //1. Get token and check if it exist
+  let token;
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    token = req.headers.authorization.split(" ")[1];
+
+    // console.log(token);
+  }
+
+  //CHECK IF TOKEN EXIST
+  if (!token) {
+    next(
+      new AppError(
+        "You are not login. Please login to view this page",
+        httpStatus.UNAUTHORIZED
+      )
+    );
+  }
+  //2. Verify the token
+
+  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  // console.log(decoded);
+
+  //3. Check if user exist
+  const currentUser = await User.findById(decoded.id);
+  if (!currentUser)
+    return next(
+      new AppError(
+        "The user with this token no longer exist",
+        httpStatus.UNAUTHORIZED
+      )
+    );
+
+  //4. Check if user changed password after token was issued
+  if (currentUser.changedPasswordAfter(decoded.iat))
+    return next(
+      new AppError(
+        "User recently changed password! Please login again.",
+        httpStatus.UNAUTHORIZED
+      )
+    );
+
+  //GRANT ACCESS TO PROTECTED ROUTE
+  req.user = currentUser;
+  next();
+});
+
+//AUTHORIZATION TO RESTRICT CERTAIN ROUTE
+
+exports.restrictTo = (...roles) => {
+  return (req, res, next) => {
+    //role include ['admin']
+    if (!roles.includes(req.user.role)) {
+      return next(
+        new AppError(
+          "You do not have permission to perform this action",
+          httpStatus.FORBIDDEN
+        )
+      );
+    }
+    next();
+  };
+};
+
+// FORGOT PASSWORD
+exports.forgotPassword = (req, res, next) => {
+  //1. Get user base on posted email
+  const user = User.findOne({ email: req.body.email });
+
+  //2. Generate random token
+
+  //3. Send it back as email
+};
+
+exports.resetPassword = (req, res, next) => {};
 
 // // const signToken = (id) => {
 // //   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -49,47 +198,6 @@ const httpStatus = require("http-status");
 //     passwordChangedAt,
 //     role,
 //   });
-
-exports.signin = catchAsync(async (req, res, next) => {
-  res.status(httpStatus.CREATED).json({
-    status: "success",
-    message: "welcome signin",
-  });
-});
-
-exports.isauth = catchAsync(async (req, res, next) => {
-  res.status(200).json({
-    status: "success",
-    message: "welcome auth",
-  });
-});
-
-exports.signup = catchAsync(async (req, res, next) => {
-  const { firstname, email, password, lastname, confirmPassword } = req.body;
-
-  const newUser = await User.create({
-    firstname,
-    email,
-    password,
-    confirmPassword,
-    lastname,
-  });
-
-  //CREATING TOKEN
-  const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRATION,
-  });
-
-  res.status(httpStatus.CREATED).json({
-    status: "success",
-    token,
-    data: {
-      user: newUser,
-    },
-  });
-
-  // next(new AppError("Something went wrong", 500));
-});
 
 //   //EXPORTED INTO A FUNCCTION
 //   //   const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
