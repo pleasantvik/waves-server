@@ -28,6 +28,7 @@
     "mailgen": "^2.0.14",
     "mongoose": "^6.7.5",
     "mongoose-aggregate-paginate-v2": "^1.0.42",
+    "nodemailer": "^6.1.1",
     "passport": "^0.4.1",
     "passport-jwt": "^4.0.0",
     "validator": "^10.9.0",
