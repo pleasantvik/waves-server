@@ -22,14 +22,15 @@ exports.getAllUsers = catchAsync(async (req, res) => {
     data: users,
   });
 });
-exports.getUser = async (req, res) => {
+exports.getUser = catchAsync(async (req, res, next) => {
   const user = await User.findOne({ _id: req.params.id });
+  if (!user) return next(new AppError("No user found", httpStatus.NOT_FOUND));
 
   res.status(200).json({
     status: "success",
     data: user,
   });
-};
+});
 exports.createUser = (req, res) => {
   res.status(500).json({
     status: "error",
@@ -83,5 +84,19 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
   res.status(204).json({
     status: "success",
     data: null,
+  });
+});
+
+exports.profile = catchAsync(async (req, res, next) => {
+  let query = User.findById(req.user.id);
+  const doc = await query;
+  if (!doc) {
+    return next(new AppError("No doc found with that ID", 404));
+  }
+  return res.status(200).json({
+    status: "success",
+    data: {
+      data: doc,
+    },
   });
 });

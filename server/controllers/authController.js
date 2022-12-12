@@ -5,7 +5,8 @@ const User = require("../model/userModel");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const httpStatus = require("http-status");
-const sendEmail = require("../utils/email");
+// const sendEmail = require("../utils/email");
+const Email = require("../utils/email");
 
 //REUSABLE FUNCTION TO CREATE TOKEN
 const signToken = (id) => {
@@ -88,6 +89,8 @@ exports.signup = catchAsync(async (req, res, next) => {
     role,
   });
 
+  const myProtocol = `${req.protocol}://${req.get("host")}`;
+
   //CREATING TOKEN
   // const token = signToken(newUser._id);
 
@@ -98,6 +101,13 @@ exports.signup = catchAsync(async (req, res, next) => {
   //     user: newUser,
   //   },
   // });
+
+  await new Email(newUser, myProtocol).sendWelcome(
+    newUser,
+    myProtocol,
+    myProtocol
+  );
+
   createSendToken(newUser, httpStatus.CREATED, res);
 
   // next(new AppError("Something went wrong", 500));
@@ -191,14 +201,17 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
     "host"
   )}/api/users/resetPassword/${resetToken}`;
 
-  const message = `Forgot your password? Submit a request with your new password and confirmPassword to ${resetURL}.\If you did'nt initiate this request, please kindly ignore the email`;
+  const myProtocol = `${req.protocol}://${req.get("host")}`;
+  // const message = `Forgot your password? Submit a request with your new password and confirmPassword to ${resetURL}.\If you did'nt initiate this request, please kindly ignore the email`;
 
   try {
-    await sendEmail({
-      email: user.email,
-      subject: `Your password reset token (Valid for 10mins)`,
-      message,
-    });
+    // await sendEmail({
+    //   email: user.email,
+    //   subject: `Your password reset token (Valid for 10mins)`,
+    //   message,
+    // });
+
+    await new Email(user, resetURL).send(user, resetURL, myProtocol);
 
     res.status(200).json({
       status: "success",
@@ -277,3 +290,19 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
     token,
   });
 });
+
+// exports.profile = catchAsync(async (req, res, next) => {
+//   let query = User.findById(req.user.id);
+
+//   let doc = await query;
+
+//   if (!doc) {
+//     return next(new AppError("No doc found with that ID", 404));
+//   }
+//   return res.status(200).json({
+//     status: "success",
+//     data: {
+//       data: doc,
+//     },
+//   });
+// });
