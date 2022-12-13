@@ -13,9 +13,11 @@ const router = express.Router();
 // router.route("/tour-stats").get(tourController.getTourStats);
 // router.route("/monthly-plan/:year").get(tourController.getMonthlyPlan);
 
+router.route("/paginate/all").post(productController.paginateProducts);
+
 router
   .route("/")
-  .get(authController.protect, productController.getProducts)
+  .get(productController.getProducts)
   .post(
     authController.protect,
     authController.restrictTo("admin"),
@@ -27,7 +29,11 @@ router
 router
   .route("/:id")
   .get(authController.protect, productController.getProduct)
-  // .patch(brandController.updateTour)
+  .patch(
+    authController.protect,
+    authController.restrictTo("admin"),
+    productController.updateProduct
+  )
   .delete(
     authController.protect,
     authController.restrictTo("admin"),
