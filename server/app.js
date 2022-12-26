@@ -3,6 +3,7 @@ const mongoSanitize = require("express-mongo-sanitize");
 const xss = require("xss-clean");
 const httpStatus = require("http-status");
 const AppError = require("./utils/appError");
+const cookieParser = require("cookie-parser");
 
 const globalErrorHandler = require("./controllers/errorController");
 
@@ -10,12 +11,14 @@ const userRouter = require("./routes/userRoutes");
 const tourRouter = require("./routes/tourRoutes");
 const brandRouter = require("./routes/brandRoutes");
 const productRouter = require("./routes/productRoutes");
+const siteRouter = require("./routes/siteRoutes");
 
 const app = express();
 
 //BODY PARSER
 
 app.use(express.json());
+app.use(cookieParser());
 app.use(mongoSanitize());
 app.use(xss());
 // app.use(express.static(`${__dirname}/public`));
@@ -34,8 +37,10 @@ app.use("/api/users", userRouter);
 app.use("/api/tours", tourRouter);
 app.use("/api/brands", brandRouter);
 app.use("/api/products", productRouter);
+app.use("/api/site", siteRouter);
 
 // Unhandled Route
+
 app.all("*", (req, res, next) => {
   // next(new AppError(`Can't find ${req.originalUrl} on this server`, 404));
 

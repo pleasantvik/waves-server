@@ -1,20 +1,28 @@
 const Product = require("../model/productModel");
-// const APIFeatures = require("../utils/apiFeatures");
+const APIFeatures = require("../utils/apiFeatures");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 const httpStatus = require("http-status");
 
 exports.getProducts = catchAsync(async (req, res, next) => {
-  const queryObj = { ...req.query };
-  const excludedField = ["page", "sort", "limit"];
-
-  excludedField.forEach((el) => delete queryObj[el]);
-  const query = Product.find(queryObj).populate("brand");
-  const products = await query;
-  res.status(200).json({
+  //FOR NESTED GET REVIEWS ON TOUR
+  let filter;
+  if (req.params.tourId) filter = { tour: req.params.tourId };
+  const features = new APIFeatures(
+    Product.find(filter).populate("brand"),
+    req.query
+  )
+    .filter()
+    .sort()
+    .limitFields()
+    .paginate();
+  const doc = await features.query;
+  res.status(httpStatus.OK).json({
     status: "success",
-    results: products.length,
-    data: products,
+    results: doc.length,
+    data: {
+      data: doc,
+    },
   });
 });
 exports.addProduct = catchAsync(async (req, res, next) => {
