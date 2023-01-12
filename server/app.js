@@ -41,7 +41,7 @@ app.use("/api/site", siteRouter);
 
 // Unhandled Route
 
-app.use(express.static("client/build"));
+app.use(express.static("../client/build"));
 if (process.env.NODE_ENV === "production") {
   const path = require("path");
   app.get("/*", (req, res) => {
