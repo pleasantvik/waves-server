@@ -1,5 +1,6 @@
 const nodemailer = require("nodemailer");
 const Mailgen = require("mailgen");
+require("dotenv").config();
 
 module.exports = class Email {
   constructor(user, url) {
