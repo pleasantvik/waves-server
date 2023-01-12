@@ -4,8 +4,8 @@
   "description": "An E-commerce site ",
   "main": "index.js",
   "scripts": {
-    "start": "cross-env NODE_ENV=production node server/server.js",
-    "start:prod": "cross-env NODE_ENV=production nodemon server/server.js",
+    "start": "node server/server.js",
+    "start:prod": " nodemon server/server.js",
     "server": "nodemon server/server.js",
     "client": "npm start --prefix client",
     "dev": "concurrently \"npm run server\" \"npm run client\" ",
