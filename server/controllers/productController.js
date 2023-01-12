@@ -3,6 +3,14 @@ const APIFeatures = require("../utils/apiFeatures");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 const httpStatus = require("http-status");
+const cloudinary = require("cloudinary").v2;
+const mongoose = require("mongoose");
+
+cloudinary.config({
+  cloud_name: "daqyjgkwc",
+  api_key: "353638758457753",
+  api_secret: process.env.CLOUDINARY_KEY,
+});
 
 exports.getProducts = catchAsync(async (req, res, next) => {
   //FOR NESTED GET REVIEWS ON TOUR
@@ -24,6 +32,20 @@ exports.getProducts = catchAsync(async (req, res, next) => {
       data: doc,
     },
   });
+});
+
+exports.upload = catchAsync(async (req, res, next) => {
+  const upload = await cloudinary.uploader.upload(req.files.file.path, {
+    public_id: `${Date.now()}`,
+    folder: "waves_upload",
+  });
+
+  // console.log(upload);
+  const pic = {
+    public_id: upload.public_id,
+    url: upload.url,
+  };
+  res.status(200).json({ data: pic });
 });
 exports.addProduct = catchAsync(async (req, res, next) => {
   const product = await Product.create(req.body);
@@ -87,12 +109,13 @@ exports.paginateProducts = catchAsync(async (req, res, next) => {
     },
     { $unwind: "$brand" }
   );
+
   /////////
 
   let aggQuery = Product.aggregate(aggQueryArray);
   const options = {
     page: req.body.page,
-    limit: 2,
+    limit: 3,
     sort: { date: "desc" },
   };
   const products = await Product.aggregatePaginate(aggQuery, options);
@@ -104,32 +127,6 @@ exports.paginateProducts = catchAsync(async (req, res, next) => {
     },
   });
 });
-
-// exports.aliasTopTours = (req, res, next) => {
-//   req.query.limit = "5";
-//   req.query.sort = "-ratingsAverage,price";
-//   req.query.fields = "name,price,ratingsAverage,summary,difficulty";
-//   next();
-// };
-
-// exports.getAllTours = catchAsync(async (req, res) => {
-//   // EXECUTE QUERY
-//   const features = new APIFeatures(Tour.find(), req.query)
-//     .filter()
-//     .sort()
-//     .limitFields()
-//     .paginate();
-//   const tours = await features.query;
-
-//   // SEND RESPONSE
-//   res.status(200).json({
-//     status: "success",
-//     results: tours.length,
-//     data: {
-//       tours,
-//     },
-//   });
-// });
 
 exports.getProduct = catchAsync(async (req, res, next) => {
   const product = await Product.findById(req.params.id).populate("brand");
@@ -178,114 +175,3 @@ exports.deleteProduct = catchAsync(async (req, res, next) => {
     data: null,
   });
 });
-
-// exports.createTour = catchAsync(async (req, res) => {
-//   // const newTour = new Tour({})
-//   // newTour.save()
-
-//   const newTour = await Tour.create(req.body);
-
-//   res.status(201).json({
-//     status: "success",
-//     data: {
-//       tour: newTour,
-//     },
-//   });
-// });
-
-// exports.updateTour = catchAsync(async (req, res, next) => {
-//   const tour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
-//     new: true,
-//     runValidators: true,
-//   });
-//   if (!tour)
-//     return next(
-//       new AppError("No tour found with the ID"),
-//       httpStatus.NOT_FOUND
-//     );
-
-//   res.status(200).json({
-//     status: "success",
-//     data: {
-//       tour,
-//     },
-//   });
-// });
-
-// exports.getTourStats = catchAsync(async (req, res) => {
-//   const stats = await Tour.aggregate([
-//     {
-//       $match: { ratingsAverage: { $gte: 4.5 } },
-//     },
-//     {
-//       $group: {
-//         _id: { $toUpper: "$difficulty" },
-//         numTours: { $sum: 1 },
-//         numRatings: { $sum: "$ratingsQuantity" },
-//         avgRating: { $avg: "$ratingsAverage" },
-//         avgPrice: { $avg: "$price" },
-//         minPrice: { $min: "$price" },
-//         maxPrice: { $max: "$price" },
-//       },
-//     },
-//     {
-//       $sort: { avgPrice: 1 },
-//     },
-//     // {
-//     //   $match: { _id: { $ne: 'EASY' } }
-//     // }
-//   ]);
-
-//   res.status(200).json({
-//     status: "success",
-//     data: {
-//       stats,
-//     },
-//   });
-// });
-
-// exports.getMonthlyPlan = catchAsync(async (req, res) => {
-//   const year = req.params.year * 1; // 2021
-
-//   const plan = await Tour.aggregate([
-//     {
-//       $unwind: "$startDates",
-//     },
-//     {
-//       $match: {
-//         startDates: {
-//           $gte: new Date(`${year}-01-01`),
-//           $lte: new Date(`${year}-12-31`),
-//         },
-//       },
-//     },
-//     {
-//       $group: {
-//         _id: { $month: "$startDates" },
-//         numTourStarts: { $sum: 1 },
-//         tours: { $push: "$name" },
-//       },
-//     },
-//     {
-//       $addFields: { month: "$_id" },
-//     },
-//     {
-//       $project: {
-//         _id: 0,
-//       },
-//     },
-//     {
-//       $sort: { numTourStarts: -1 },
-//     },
-//     {
-//       $limit: 12,
-//     },
-//   ]);
-
-//   res.status(200).json({
-//     status: "success",
-//     data: {
-//       plan,
-//     },
-//   });
-// });

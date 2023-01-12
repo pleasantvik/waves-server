@@ -69,6 +69,18 @@ exports.signin = catchAsync(async (req, res, next) => {
   createSendToken(user, httpStatus.OK, res);
 });
 
+exports.logout = (req, res, next) => {
+  res.cookie("jwt", "loggedout", {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true,
+  });
+  res.status(httpStatus.OK).json({
+    status: "success",
+  });
+
+  next();
+};
+
 exports.isauth = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
@@ -100,6 +112,7 @@ exports.signup = catchAsync(async (req, res, next) => {
   //   data: {
   //     user: newUser,
   //   },
+
   // });
 
   await new Email(newUser, myProtocol).sendWelcome(
@@ -110,6 +123,7 @@ exports.signup = catchAsync(async (req, res, next) => {
 
   createSendToken(newUser, httpStatus.CREATED, res);
 
+  next();
   // next(new AppError("Something went wrong", 500));
 });
 
@@ -195,22 +209,16 @@ exports.isAuth = catchAsync(async (req, res, next) => {
   //3. Check if user exist
   const currentUser = await User.findById(decoded.id);
   if (!currentUser) return next();
-  // new AppError(
-  //   "The user with this token no longer exist",
-  //   httpStatus.UNAUTHORIZED
-  // )
 
   //4. Check if user changed password after token was issued
   if (currentUser.changedPasswordAfter(decoded.iat)) return next();
-  // new AppError(
-  //   "User recently changed password! Please login again.",
-  //   httpStatus.UNAUTHORIZED
-  // )
 
   //GRANT ACCESS TO PROTECTED ROUTE
   // res.locals.user = currentUser;
-  return res.json(currentUser);
-  // req.user = currentUser;
+  return res.json({
+    data: currentUser,
+    token,
+  });
 
   next();
 });
@@ -353,6 +361,7 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
 //   return res.status(200).json({
 //     status: "success",
 //     data: {
+
 //       data: doc,
 //     },
 //   });
