@@ -41,14 +41,14 @@ app.use("/api/site", siteRouter);
 
 // Unhandled Route
 
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static("client/build"));
-  const path = require("path");
-  app.get("/*", (req, res) => {
-    res.sendFile(path.resolve(__dirname, "../client", "build", "index.html"));
-    // res.sendFile(`../client/build/index.html`);
-  });
-}
+// if (process.env.NODE_ENV === "production") {
+//   app.use(express.static("client/build"));
+//   const path = require("path");
+//   app.get("/*", (req, res) => {
+//     res.sendFile(path.resolve(__dirname, "../client", "build", "index.html"));
+//     // res.sendFile(`../client/build/index.html`);
+//   });
+// }
 
 app.all("*", (req, res, next) => {
   // next(new AppError(`Can't find ${req.originalUrl} on this server`, 404));
@@ -65,3 +65,13 @@ app.all("*", (req, res, next) => {
 app.use(globalErrorHandler);
 
 module.exports = app;
+
+/**
+ * ,
+    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install --prefix client && npm run build --prefix client"
+
+
+     "engines": {
+    "node": "16.x"
+  },
+ */
